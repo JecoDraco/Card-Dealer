@@ -337,14 +337,17 @@ button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: no
   text-decoration: none;
 }
 
-.game-area .showdown-overlay {
+.showdown-overlay {
   background: rgba(0,0,0,0.85);
   position: fixed;
   inset: 0;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+.showdown-overlay.active {
+  display: flex;
 }
 .showdown-box {
   background: #0a4028;
@@ -462,7 +465,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: no
   <div id="gameError" class="error-msg"></div>
 </div>
 
-<div id="showdownOverlay" class="hidden showdown-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;">
+<div id="showdownOverlay" class="showdown-overlay">
   <div class="showdown-box" id="showdownBox"></div>
 </div>
 
@@ -510,7 +513,7 @@ roomCodeDisplay.addEventListener('click', () => {
 });
 
 showdownOverlay.addEventListener('click', e => {
-  if (e.target === showdownOverlay) showdownOverlay.classList.add('hidden');
+    if (e.target === showdownOverlay) showdownOverlay.classList.remove('active');
 });
 
 function cardHTML(card, extra, mini) {
@@ -779,7 +782,7 @@ function handleMessage(msg) {
       myCards = [];
       communityCards = [null, null, null, null, null];
       if (msg.players) players = msg.players;
-      showdownOverlay.classList.add('hidden');
+      showdownOverlay.classList.remove('active');
       renderAll();
       break;
     }
@@ -827,13 +830,13 @@ function showShowdown(hands, winner) {
     </div>`;
 
   showdownBox.innerHTML = html;
-  showdownOverlay.classList.remove('hidden');
+  showdownOverlay.classList.add('active');
 
   document.getElementById('btnNewHand').addEventListener('click', () => {
     if (isHost) {
       send({ type: 'new_hand' });
     }
-    showdownOverlay.classList.add('hidden');
+    showdownOverlay.classList.remove('active');
   });
 }
 
