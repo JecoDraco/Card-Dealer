@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repartidor Virtual</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: #0f5c3a;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  color: #fff;
+}
+h1 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 4px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.subtitle {
+  color: #8fc9a0;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.game-area {
+  background: #0a4028;
+  border-radius: 28px;
+  padding: 24px 20px;
+  max-width: 1200px;
+  width: 95%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.2);
+  border: 1px solid #1a7040;
+  transition: all 0.3s;
+}
+.game-area.fs {
+  position: fixed;
+  inset: 0;
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 2vh 2vw;
+  border: none;
+}
+.game-area.fs .hide-fs { display: none !important; }
+
+.section-label {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-size: 0.65rem;
+  color: #5a9a6a;
+  font-family: system-ui, -apple-system, sans-serif;
+  margin-bottom: 8px;
+}
+.game-area.fs .section-label {
+  font-size: clamp(0.5rem, 1.2vw, 1rem);
+  margin-bottom: 1.5vh;
+}
+
+.community-area {
+  background: rgba(0,0,0,0.15);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 8px 0 12px;
+}
+.game-area.fs .community-area {
+  background: none;
+  padding: 0;
+  margin: 0;
+  flex: 0 1 auto;
+}
+
+.card-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  min-height: 260px;
+}
+.game-area.fs .card-row {
+  gap: 1.5vw;
+  min-height: 0;
+}
+
+.card {
+  width: 180px;
+  height: 252px;
+  background: #fff;
+  border-radius: 11px;
+  border: 1.5px solid #bbb;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.game-area.fs .card {
+  width: 17vw;
+  height: 24vw;
+  border-radius: 0.8vw;
+  max-height: 70vh;
+}
+@media (max-aspect-ratio: 4/3) {
+  .game-area.fs .card {
+    width: 18vh;
+    height: 25vh;
+  }
+}
+
+.card-back {
+  background: linear-gradient(135deg, #162d50 0%, #1a3a6a 50%, #162d50 100%);
+  border: 2px solid #2a4a7a;
+  background-image:
+    repeating-linear-gradient(
+      45deg, transparent, transparent 4px,
+      rgba(255,255,255,0.06) 4px, rgba(255,255,255,0.06) 8px
+    );
+}
+.game-area.fs .card-back {
+  border-width: 0.15vw;
+  background-image:
+    repeating-linear-gradient(
+      45deg, transparent, transparent 0.3vw,
+      rgba(255,255,255,0.06) 0.3vw, rgba(255,255,255,0.06) 0.6vw
+    );
+}
+.card-back::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+}
+.game-area.fs .card-back::after {
+  inset: 0.8vw;
+  border-radius: 0.5vw;
+  border-width: 0.15vw;
+}
+.card-back.empty {
+  opacity: 0.3;
+  border-style: dashed;
+}
+
+.card.face-up {
+  background: #fff;
+  border-color: #ccc;
+}
+.card.face-up .rank-suit-center {
+  text-align: center;
+  line-height: 1;
+}
+.card.face-up .rank { font-size: 3rem; font-weight: 700; }
+.card.face-up .suit-big { font-size: 4.2rem; line-height: 1.1; }
+.game-area.fs .card.face-up .rank { font-size: 4.5vw; }
+.game-area.fs .card.face-up .suit-big { font-size: 6vw; }
+@media (max-aspect-ratio: 4/3) {
+  .game-area.fs .card.face-up .rank { font-size: 4.5vh; }
+  .game-area.fs .card.face-up .suit-big { font-size: 6vh; }
+}
+
+.card .corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  font-weight: 700;
+}
+.card .corner.top-left { top: 9px; left: 11px; }
+.card .corner.bottom-right { bottom: 9px; right: 11px; transform: rotate(180deg); }
+.card .corner .cr { font-size: 1.5rem; }
+.card .corner .cs { font-size: 1.2rem; }
+.game-area.fs .card .corner.top-left { top: 0.6vw; left: 0.7vw; }
+.game-area.fs .card .corner.bottom-right { bottom: 0.6vw; right: 0.7vw; }
+.game-area.fs .card .corner .cr { font-size: 1.5vw; }
+.game-area.fs .card .corner .cs { font-size: 1.1vw; }
+
+.card.red { color: #cc2233; }
+.card.black { color: #1a1a1a; }
+.card.dealing { animation: deal 0.25s ease-out; }
+@keyframes deal {
+  from { transform: translateY(-30px) rotate(-6deg); opacity: 0; }
+  to { transform: translateY(0) rotate(0); opacity: 1; }
+}
+.game-area.fs .card.dealing {
+  animation-duration: 0.2s;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.game-area.fs .controls {
+  margin: 2vh 0 0;
+  gap: 1.2vw;
+}
+
+button {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+  letter-spacing: 1.5px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+button:hover { transform: translateY(-1px); filter: brightness(1.1); }
+button:active { transform: translateY(0); }
+button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: none; }
+.game-area.fs button {
+  padding: 0.6vw 1.5vw;
+  font-size: clamp(0.65rem, 1.1vw, 1rem);
+  border-radius: 0.6vw;
+}
+.btn-green { background: #2a7a44; color: #fff; }
+.btn-red { background: #b71c1c; color: #fff; }
+.btn-gray { background: #37474f; color: #fff; }
+.btn-blue { background: #1565c0; color: #fff; }
+.btn-purple { background: #5a1a7a; color: #fff; }
+.btn-sm { padding: 6px 14px; font-size: 0.75rem; }
+
+.info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.info-bar .lbl { color: #5a9a6a; }
+.info-bar .val { color: #fff; font-weight: 600; }
+
+.burn-area { margin-top: 10px; }
+.burn-row {
+  display: flex;
+  gap: 6px;
+  min-height: 100px;
+  justify-content: center;
+}
+.burn-row .card {
+  width: 72px; height: 100px; border-radius: 7px;
+}
+.burn-row .card .corner .cr { font-size: 0.85rem; }
+.burn-row .card .corner .cs { font-size: 0.75rem; }
+.burn-row .card .rank { font-size: 1.2rem; }
+.burn-row .card .suit-big { font-size: 1.6rem; }
+.burn-row .card .corner.top-left { top: 5px; left: 6px; }
+.burn-row .card .corner.bottom-right { bottom: 5px; right: 6px; }
+.burn-row .card-back::after { inset: 5px; }
+
+.done-msg {
+  color: #ffd54f;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.game-area.fs .done-msg { font-size: clamp(0.8rem, 1.5vw, 1.5rem); }
+
+.fs-close {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 99999;
+  display: none;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background 0.15s;
+}
+.fs-close:hover { background: rgba(0,0,0,0.6); }
+.fs-close.visible { display: block; }
+
+.verify-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.verify-overlay.open { opacity: 1; pointer-events: all; }
+.verify-box {
+  background: #0a4028;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 580px;
+  width: 92%;
+  border: 1px solid #1a7040;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.verify-box h2 { text-align: center; font-size: 0.95rem; margin-bottom: 16px; color: #8fc9a0; }
+.verify-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 80px);
+  gap: 5px;
+  justify-content: center;
+}
+.verify-grid .card {
+  width: 76px; height: 106px; border-radius: 7px;
+}
+.verify-grid .card .corner .cr { font-size: 0.8rem; }
+.verify-grid .card .corner .cs { font-size: 0.7rem; }
+.verify-grid .card .rank { font-size: 1rem; }
+.verify-grid .card .suit-big { font-size: 1.3rem; }
+.verify-grid .card .corner.top-left { top: 5px; left: 6px; }
+.verify-grid .card .corner.bottom-right { bottom: 5px; right: 6px; }
+.verify-grid .card-back::after { inset: 6px; }
+.verify-grid .card-burned { border-color: #8a2a5a; box-shadow: 0 0 0 1px #8a2a5a; }
+.verify-box .close-wrap { text-align: center; margin-top: 16px; }
+
+.footer { margin-top: 16px; text-align: center; color: rgba(255,255,255,0.2); font-size: 0.75rem; font-family: system-ui, -apple-system, sans-serif; }
+</style>
+</head>
+<body>
+
+<button class="fs-close" id="fsClose">⛶ Salir de pantalla completa</button>
+
+<h1>♠  REPARTIDOR  ♥</h1>
+<p class="subtitle hide-fs">Tus 2 cartas van en tu baraja física &bull; la web da las comunitarias</p>
+
+<div class="game-area" id="gameArea">
+  <div class="top-bar hide-fs" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+    <div class="section-label" style="margin:0">C O M U N I T A R I A S</div>
+    <button class="btn-gray btn-sm" id="btnFullscreen">⛶ Pantalla Completa</button>
+  </div>
+
+  <div class="community-area">
+    <div class="card-row" id="communityCards"></div>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="btn-green" id="btnStart">Nueva Mano</button>
+  </div>
+
+  <div class="info-bar hide-fs">
+    <span><span class="lbl">Mazo:</span> <span class="val" id="deckCount">52</span></span>
+    <span><span class="lbl">Quemadas:</span> <span class="val" id="burnCount">0</span></span>
+    <span><span class="lbl">Seed:</span> <span class="val" id="seedDisplay">---</span></span>
+    <button class="btn-blue" id="btnVerify" disabled>Verificar</button>
+  </div>
+
+  <div class="burn-area hide-fs">
+    <div class="section-label">Q U E M A D A S</div>
+    <div class="burn-row" id="burnPile"></div>
+  </div>
+</div>
+
+<div class="footer hide-fs">Seed visible para verificar &bull; Espacio = avanzar &bull; F / T / R = atajos</div>
+
+<div class="verify-overlay" id="verifyOverlay">
+  <div class="verify-box">
+    <h2>Mazo completo — 52 cartas</h2>
+    <div class="verify-grid" id="verifyGrid"></div>
+    <div class="close-wrap"><button class="btn-gray" id="btnCloseVerify">Cerrar</button></div>
+  </div>
+</div>
+
+<script>
+const SUITS = ['♠', '♥', '♦', '♣'];
+const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+const gameArea = document.getElementById('gameArea');
+const communityEl = document.getElementById('communityCards');
+const deckCountEl = document.getElementById('deckCount');
+const burnCountEl = document.getElementById('burnCount');
+const seedDisplayEl = document.getElementById('seedDisplay');
+const burnPileEl = document.getElementById('burnPile');
+const btnStart = document.getElementById('btnStart');
+const btnVerify = document.getElementById('btnVerify');
+const btnFullscreen = document.getElementById('btnFullscreen');
+const fsClose = document.getElementById('fsClose');
+const verifyOverlay = document.getElementById('verifyOverlay');
+const verifyGrid = document.getElementById('verifyGrid');
+const btnCloseVerify = document.getElementById('btnCloseVerify');
+
+let deck = [];
+let burnPile = [];
+let communityCards = [];
+let revealedCards = 0;
+let seed = '';
+
+function playCardSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 800; osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.08);
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+    osc2.frequency.value = 400; osc2.type = 'triangle';
+    gain2.gain.setValueAtTime(0.08, ctx.currentTime + 0.02);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc2.start(ctx.currentTime + 0.02); osc2.stop(ctx.currentTime + 0.12);
+  } catch(_) {}
+}
+
+function createDeck() {
+  const d = [];
+  for (const s of SUITS)
+    for (const v of VALUES)
+      d.push({ suit: s, value: v });
+  return d;
+}
+
+function seededRandom(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+  return () => { h = (h * 1103515245 + 12345) | 0; return (h >>> 0) / 4294967296; };
+}
+
+function shuffle(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+
+function generateSeed() {
+  return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+}
+
+function cardFaceHTML(card, extra) {
+  const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+  return `<div class="card face-up ${color}${extra ? ' ' + extra : ''}">
+    <div class="corner top-left"><span class="cr">${card.value}</span><span class="cs">${card.suit}</span></div>
+    <div class="rank-suit-center"><div class="rank">${card.value}</div><div class="suit-big">${card.suit}</div></div>
+    <div class="corner bottom-right"><span class="cr">${card.value}</span><span class="cs">${card.suit}</span></div>
+  </div>`;
+}
+
+function cardBackHTML(extra) {
+  return `<div class="card card-back${extra ? ' ' + extra : ''}"></div>`;
+}
+
+function renderAll() {
+  communityEl.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    if (i < revealedCards && communityCards[i])
+      communityEl.insertAdjacentHTML('beforeend', cardFaceHTML(communityCards[i], 'dealing'));
+    else if (communityCards[i])
+      communityEl.insertAdjacentHTML('beforeend', cardBackHTML());
+    else
+      communityEl.insertAdjacentHTML('beforeend', cardBackHTML('empty'));
+  }
+  burnPileEl.innerHTML = '';
+  burnPile.forEach(c => burnPileEl.insertAdjacentHTML('beforeend', cardFaceHTML(c)));
+  deckCountEl.textContent = deck.length;
+  burnCountEl.textContent = burnPile.length;
+}
+
+function updateButtons() {
+  document.querySelectorAll('.btn-action, .done-msg').forEach(el => el.remove());
+  const ctrl = document.getElementById('controls');
+  if (revealedCards < 3) {
+    const b = document.createElement('button');
+    b.className = 'btn-green btn-action'; b.textContent = 'F L O P';
+    b.onclick = () => revealNext('flop'); ctrl.appendChild(b);
+  } else if (revealedCards === 3) {
+    const b = document.createElement('button');
+    b.className = 'btn-purple btn-action'; b.textContent = 'T U R N';
+    b.onclick = () => revealNext('turn'); ctrl.appendChild(b);
+  } else if (revealedCards === 4) {
+    const b = document.createElement('button');
+    b.className = 'btn-red btn-action'; b.textContent = 'R I V E R';
+    b.onclick = () => revealNext('river'); ctrl.appendChild(b);
+  } else {
+    const m = document.createElement('span');
+    m.className = 'done-msg'; m.textContent = 'MANO COMPLETA'; ctrl.appendChild(m);
+  }
+}
+
+function revealNext(stage) {
+  if (deck.length === 0) return;
+  const burned = deck.pop(); burnPile.push(burned);
+  if (stage === 'flop') revealedCards = 3; else revealedCards++;
+  playCardSound(); renderAll(); updateButtons();
+}
+
+function newHand() {
+  seed = generateSeed(); seedDisplayEl.textContent = seed;
+  const rng = seededRandom(seed); deck = createDeck(); shuffle(deck, rng);
+  burnPile = []; communityCards = []; revealedCards = 0;
+  for (let i = 0; i < 5; i++) communityCards.push(deck.pop());
+  btnStart.textContent = 'Reiniciar'; btnVerify.disabled = false;
+  renderAll(); updateButtons();
+}
+
+function setFullscreen(on) {
+  gameArea.classList.toggle('fs', on);
+  fsClose.classList.toggle('visible', on);
+  btnFullscreen.textContent = on ? '⛶ Salir' : '⛶ Pantalla Completa';
+}
+
+btnFullscreen.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+    setFullscreen(true);
+  } else {
+    document.exitFullscreen().catch(() => {});
+    setFullscreen(false);
+  }
+});
+
+fsClose.addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  setFullscreen(false);
+});
+
+document.addEventListener('fullscreenchange', () => {
+  setFullscreen(!!document.fullscreenElement);
+});
+
+btnStart.addEventListener('click', newHand);
+
+btnVerify.addEventListener('click', () => {
+  verifyGrid.innerHTML = '';
+  const burnedSet = new Set(burnPile.map(c => c.suit + c.value));
+  [...burnPile, ...communityCards, ...deck].forEach(c => {
+    verifyGrid.insertAdjacentHTML('beforeend', cardFaceHTML(c, burnedSet.has(c.suit + c.value) ? 'card-burned' : ''));
+  });
+  verifyOverlay.classList.add('open');
+});
+
+btnCloseVerify.addEventListener('click', () => verifyOverlay.classList.remove('open'));
+verifyOverlay.addEventListener('click', e => { if (e.target === verifyOverlay) verifyOverlay.classList.remove('open'); });
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) {
+    e.preventDefault(); const a = document.querySelector('.btn-action'); if (a) a.click(); else btnStart.click();
+  }
+  ['F','T','R'].forEach(k => {
+    if (e.code === 'Key' + k) {
+      const b = document.querySelector('.btn-action');
+      const names = { F: 'FLOP', T: 'TURN', R: 'RIVER' };
+      if (b && b.textContent.includes(names[k])) b.click();
+    }
+  });
+  if (e.code === 'Escape' && gameArea.classList.contains('fs')) {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    setFullscreen(false);
+  }
+});
+
+newHand();
+</script>
+</body>
+</html>
