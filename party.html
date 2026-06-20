@@ -17,9 +17,42 @@ body {
   padding: 20px;
 }
 h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
-.subtitle { color: #8888aa; margin-bottom: 24px; font-size: 0.9rem; }
+.subtitle { color: #8888aa; margin-bottom: 16px; font-size: 0.9rem; }
 
-/* Category grid */
+.top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  padding: 4px;
+  border-radius: 30px;
+}
+.toggle-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  background: transparent;
+  color: #8888aa;
+}
+.toggle-btn.active {
+  background: #e94560;
+  color: #fff;
+}
+.toggle-btn#btnAdult.active { background: #ff6f00; }
+
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -43,7 +76,6 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
 .cat-card .desc { color: #8888aa; font-size: 0.8rem; margin-top: 6px; }
 .cat-card:active { transform: scale(0.97); }
 
-/* Game screen */
 .game-screen {
   display: none;
   max-width: 700px;
@@ -72,13 +104,7 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
   font-family: inherit;
 }
 .btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; }
-
-.cat-label {
-  font-size: 0.85rem;
-  color: #8888aa;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
+.cat-label { font-size: 0.85rem; color: #8888aa; letter-spacing: 2px; text-transform: uppercase; }
 
 .prompt-box {
   background: linear-gradient(135deg, #16213e, #0f3460);
@@ -100,21 +126,23 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
   line-height: 1.4;
   max-width: 550px;
 }
-.prompt-text.fade-in {
-  animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.prompt-text.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .prompt-text.small { font-size: 1.2rem; }
-
-.game-controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
+.prompt-text.adult { color: #ffab00; }
+.mode-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
+.mode-badge.normal { background: rgba(255,255,255,0.1); color: #8888aa; }
+.mode-badge.adult { background: rgba(255,111,0,0.2); color: #ffab00; }
+
+.game-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .btn-primary {
   background: #e94560;
   color: #fff;
@@ -130,6 +158,7 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
 }
 .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .btn-primary:active { transform: translateY(0); }
+.btn-primary.adult-mode { background: #ff6f00; }
 
 .btn-secondary {
   background: rgba(255,255,255,0.08);
@@ -143,17 +172,10 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
   font-family: inherit;
 }
 .btn-secondary:hover { background: rgba(255,255,255,0.15); color: #fff; }
-
-.count-display {
-  color: #555577;
-  font-size: 0.85rem;
-  margin-top: 16px;
-  text-align: center;
-}
-
+.count-display { color: #555577; font-size: 0.85rem; margin-top: 16px; text-align: center; }
 .footer { margin-top: 30px; color: rgba(255,255,255,0.15); font-size: 0.75rem; text-align: center; }
+.footer a { color: #555577; text-decoration: none; }
 
-/* responsive */
 @media (max-width: 500px) {
   .cat-grid { grid-template-columns: 1fr; }
   .prompt-box { padding: 32px 20px; min-height: 180px; }
@@ -167,6 +189,13 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
 
 <h1>🎉 PARTY GAMES</h1>
 <p class="subtitle" id="subtitle">Elegí una categoría para empezar</p>
+
+<div class="top-bar">
+  <div class="toggle-wrap">
+    <button class="toggle-btn active" id="btnNormal">Normal</button>
+    <button class="toggle-btn" id="btnAdult">🔥 Adulto</button>
+  </div>
+</div>
 
 <div class="cat-grid" id="catGrid"></div>
 
@@ -185,16 +214,12 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
   <div class="count-display" id="countDisplay"></div>
 </div>
 
-<div class="footer">Presioná espacio para siguiente prompt &bull; <a href="index.html" style="color:#555577;text-decoration:none;">♠ Repartidor Texas Holdem</a></div>
+<div class="footer">Espacio = siguiente &bull; <a href="index.html">♠ Repartidor Texas Holdem</a></div>
 
 <script>
-// ── Categories ──
 const CATEGORIES = [
   {
-    id: 'nunca',
-    emoji: '🍻',
-    name: 'Yo nunca',
-    desc: 'El que lo hizo, toma',
+    id: 'nunca', emoji: '🍻', name: 'Yo nunca', desc: 'El que lo hizo, toma',
     prompts: [
       'Yo nunca me dormí en el trabajo',
       'Yo nunca fingí una llamada para escapar de una situación',
@@ -208,7 +233,7 @@ const CATEGORIES = [
       'Yo nunca hablé solo en público sin darme cuenta',
       'Yo nunca me hice el enfermo para no ir a algún lado',
       'Yo nunca rompí algo y me hice el boludo',
-      'Yo nunca busqué el nombre de una canción con la letra',
+      'Yo nunca busque el nombre de una canción con la letra',
       'Yo nunca le di like sin querer a una foto vieja',
       'Yo nunca me equivoqué de persona y le hablé como si fuera otro',
       'Yo nunca saqué una selfie hasta sacar la perfecta',
@@ -217,13 +242,16 @@ const CATEGORIES = [
       'Yo nunca fingí que me gustaba una comida por cortesía',
       'Yo nunca usé una excusa inventada para cancelar planes',
       'Yo nunca leí mensajes viejos y me arrepentí',
-      'Yo nunca critiqué algo y después lo hice',
+      'Yo nunca criticando algo y después lo hice',
       'Yo nunca me dormí viendo algo y desperté 3 horas después',
       'Yo nunca me mandé un mensaje a mí mismo como recordatorio',
       'Yo nunca tarareé una canción y sonó horrible',
+      'Yo nunca juzgué a alguien por su nombre',
       'Yo nunca fingí saber a dónde iba cuando estaba perdido',
       'Yo nunca reaccioné con emoji a un mensaje serio',
       'Yo nunca me reí de algo que no entendí para no quedar afuera',
+    ],
+    promptsAdult: [
       'Yo nunca grabé un video sexual con alguien',
       'Yo nunca estuve en bolas en un lugar que no debía',
       'Yo nunca fingí un orgasmo',
@@ -256,11 +284,40 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'verdad',
-    emoji: '💌',
-    name: 'Verdad o Reto',
-    desc: 'Pregunta incómoda o desafío',
+    id: 'verdad', emoji: '💌', name: 'Verdad o Reto', desc: 'Pregunta incómoda o desafío',
     prompts: [
+      'VERDAD: ¿Cuál es tu mayor secreto?',
+      'RETO: Mandale un mensaje random a tu ex',
+      'VERDAD: ¿A quién del grupo besarías?',
+      'RETO: Hacé 10 flexiones ahora mismo',
+      'VERDAD: ¿Cuál fue tu momento más vergonzoso?',
+      'RETO: Llamá a tu mamá y decile que la amás',
+      'VERDAD: ¿De quién del grupo te cae mal?',
+      'RETO: Publicá un selfie feo en tus historias',
+      'VERDAD: ¿Alguna vez robaste algo?',
+      'RETO: Contá un chiste malo sin reírte',
+      'VERDAD: ¿Qué mentira grande dijiste alguna vez?',
+      'RETO: Hace un baile ridículo por 15 segundos',
+      'VERDAD: ¿Qué es lo que nunca le contarías a tus papás?',
+      'RETO: Cambiate de look con alguien por 5 minutos',
+      'VERDAD: ¿Cuál fue tu crush más raro?',
+      'RETO: Tomate algo sin manos',
+      'VERDAD: ¿Alguna vez espiaste a alguien?',
+      'RETO: Hablá con acento raro hasta tu próximo turno',
+      'VERDAD: ¿Qué harías si fueras invisible por un día?',
+      'RETO: Hacele un cumplido exagerado a la persona de tu derecha',
+      'VERDAD: ¿Qué es lo peor que hiciste estando en pedo?',
+      'RETO: Cantá una canción con la letra inventada',
+      'VERDAD: ¿Alguna vez te enamoraste de un amigo?',
+      'RETO: Hacé una confesión a un desconocido por mensaje',
+      'VERDAD: ¿Cuál es tu mayor inseguridad?',
+      'RETO: Ponete algo ridículo en la cabeza',
+      'VERDAD: ¿Qué es lo más caro que rompiste?',
+      'RETO: Hace un minuto de micrófono abierto sobre un tema random',
+      'VERDAD: ¿Cuál fue tu cita más aburrida?',
+      'RETO: Mandale un mensaje a tu contacto más reciente diciendo "te extraño"',
+    ],
+    promptsAdult: [
       'VERDAD: ¿Cuál es tu mayor secreto sexual?',
       'RETO: Mandale un mensaje subido de tono a tu ex',
       'VERDAD: ¿A quién del grupo te cogerie?',
@@ -303,7 +360,7 @@ const CATEGORIES = [
       'RETO: Contá tu experiencia más hot con lujo de detalles',
       'VERDAD: ¿Alguna vez te gustó un amigo de tu pareja?',
       'RETO: Hace un baile erótico con la canción que el grupo elija',
-      'VERDAD: ¿ Qué es lo más atrevido que hiciste en público?',
+      'VERDAD: ¿Qué es lo más atrevido que hiciste en público?',
       'RETO: Mandá un audio hot a alguien que el grupo elija',
       'VERDAD: ¿Usaste apps de citas solo para coger?',
       'RETO: Hacé una imitación sexual de alguien del grupo',
@@ -314,11 +371,35 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'probable',
-    emoji: '🎯',
-    name: '¿Quién es más probable?',
-    desc: 'Todos señalan al que aplica',
+    id: 'probable', emoji: '🎯', name: '¿Quién es más probable?', desc: 'Todos señalan al que aplica',
     prompts: [
+      '¿Quién es más probable que llegue tarde a su propia boda?',
+      '¿Quién es más probable que se case primero?',
+      '¿Quién es más probable que tenga una cuenta secreta de redes?',
+      '¿Quién es más probable que haga un viaje improvisado?',
+      '¿Quién es más probable que se olvide de su cumpleaños?',
+      '¿Quién es más probable que sobreviva en una isla desierta?',
+      '¿Quién es más probable que se vuelva millonario?',
+      '¿Quién es más probable que tenga más hijos?',
+      '¿Quién es más probable que diga algo sin filtro?',
+      '¿Quién es más probable que se pierda en su propio barrio?',
+      '¿Quién es más probable que se enamore de un desconocido?',
+      '¿Quién es más probable que termine en la cárcel?',
+      '¿Quién es más probable que sea famoso?',
+      '¿Quién es más probable que se case por conveniencia?',
+      '¿Quién es más probable que se vaya a vivir a otro país?',
+      '¿Quién es más probable que tenga un gato?',
+      '¿Quién es más probable que se tatué algo de este grupo?',
+      '¿Quién es más probable que ghostee a alguien?',
+      '¿Quién es más probable que ponga excusas para no salir?',
+      '¿Quién es más probable que se haga millonario de la nada?',
+      '¿Quién es más probable que tenga un accidente tonto?',
+      '¿Quién es más probable que se olvide su celular en casa?',
+      '¿Quién es más probable que baile en un boliche con desconocidos?',
+      '¿Quién es más probable que tenga la peor ortografía?',
+      '¿Quién es más probable que sepa más de chismes?',
+    ],
+    promptsAdult: [
       '¿Quién es más probable que tenga sexo en la primera cita?',
       '¿Quién es más probable que tenga un trío?',
       '¿Quién es más probable que sea el mejor en la cama?',
@@ -372,11 +453,40 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'conocerse',
-    emoji: '🤝',
-    name: 'Preguntas para conocerse',
-    desc: 'Para romper el hielo de verdad',
+    id: 'conocerse', emoji: '🤝', name: 'Preguntas para conocerse', desc: 'Para romper el hielo de verdad',
     prompts: [
+      '¿Cuál es tu recuerdo favorito de la infancia?',
+      '¿Qué te apasiona?',
+      'Si pudieras vivir en cualquier época, ¿cuál sería?',
+      '¿Cuál es el mejor consejo que te dieron?',
+      '¿Qué te gustaría cambiar del mundo?',
+      '¿Cuál es tu mayor logro hasta ahora?',
+      'Si tuvieras un superpoder, ¿cuál elegirías?',
+      '¿Qué te da miedo confesar?',
+      '¿Cuál es tu lugar favorito en el mundo?',
+      '¿Qué te hace sentir vivo?',
+      'Si pudieras cenar con alguien famoso, ¿quién sería?',
+      '¿Qué hábito te gustaría dejar?',
+      '¿Cuál es tu canción favorita de todos los tiempos?',
+      '¿Qué te arrepientes de no haber hecho?',
+      '¿Qué valor te enseñaron tus papás que más valorás?',
+      'Si ganaras la lotería mañana, ¿qué harías?',
+      '¿Cuál es la persona que más te influenció?',
+      '¿Qué te gusta hacer cuando estás solo?',
+      '¿Cuál es la película que más te marcó?',
+      '¿Qué te gustaría aprender este año?',
+      '¿Cuál es tu tradición familiar favorita?',
+      '¿Qué te hace reír siempre?',
+      'Si pudieras vivir en cualquier ciudad, ¿cuál sería?',
+      '¿Qué te da energía cuando estás agotado?',
+      '¿Qué libro o película te cambió la forma de pensar?',
+      '¿Cuál es tu olor favorito?',
+      '¿Qué te gusta cocinar?',
+      '¿Cuál es tu recuerdo favorito con amigos?',
+      '¿Qué te gustaría hacer más seguido?',
+      '¿Cuál es tu mayor sueño?',
+    ],
+    promptsAdult: [
       '¿Cuál es tu fantasía sexual número 1?',
       '¿Qué es lo más atrevido que hiciste en la cama?',
       '¿Con cuántas personas estuviste y cuántas de verdad te gustaron?',
@@ -425,11 +535,35 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'retos',
-    emoji: '⚡',
-    name: 'Retos locos',
-    desc: 'Desafíos físicos y mímicos',
+    id: 'retos', emoji: '⚡', name: 'Retos locos', desc: 'Desafíos físicos y mímicos',
     prompts: [
+      'Hacé una flexión de brazos con una sola mano',
+      'Cantá el himno nacional sin equivocarte',
+      'Imitá a un animal hasta que alguien adivine',
+      'Tomate un vaso de agua sin usar las manos',
+      'Hablá sin mover los labios por 30 segundos',
+      'Tratá de hacer reír a alguien sin hablar',
+      'Poné cara seria mientras todos te hacen reír',
+      'Hacé un baile de Tik Tok',
+      'Hablá al revés 3 oraciones',
+      'Mantene una cuchara en la nariz por 10 segundos',
+      'Hacé una estatua humana y que alguien te mueva',
+      'Decí el abecedario al revés',
+      'Poné hielo en tu boca y decí un trabalenguas',
+      'Imitá a otro jugador y que adivinen quién es',
+      'Parate en un pie con los ojos cerrados 30 segundos',
+      'Hacé una mímica de una película hasta que la adivinen',
+      'Caminá como robot por una ronda',
+      'Tratá de silbar una canción',
+      'Hacé 10 sentadillas bien hechas',
+      'Pestañeá exageradamente cada vez que hablás',
+      'Hablá con la voz más grave posible',
+      'Competencia de pulgares con alguien',
+      'Hacé un discurso de 30 segundos sobre un objeto random',
+      'Contá un chiste y nadie tiene permitido reírse',
+      'Descruzá los brazos y mantenelos así 1 minuto',
+    ],
+    promptsAdult: [
       'Hacé un baile erótico por 30 segundos',
       'Chupale el cuello a alguien por 10 segundos',
       'Dejá que alguien te quite una prenda',
@@ -482,11 +616,35 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'hari-as',
-    emoji: '🧠',
-    name: '¿Qué harías si...?',
-    desc: 'Situaciones hipotéticas',
+    id: 'hari-as', emoji: '🧠', name: '¿Qué harías si...?', desc: 'Situaciones hipotéticas',
     prompts: [
+      '¿Qué harías si te quedaras dormido en el tren y despertaras en otra ciudad?',
+      '¿Qué harías si ganaras 10 millones de dólares mañana?',
+      '¿Qué harías si pudieras leer la mente por un día?',
+      '¿Qué harías si tu mejor amigo te confesara que está enamorado de vos?',
+      '¿Qué harías si te ofrecieran tu trabajo soñado pero en otro país?',
+      '¿Qué harías si descubrieras que tu pareja te esconde algo grave?',
+      '¿Qué harías si viajaras al pasado y te encontraras con vos mismo?',
+      '¿Qué harías si pudieras cambiar una sola decisión de tu vida?',
+      '¿Qué harías si te dijeran que te queda un año de vida?',
+      '¿Qué harías si quedaras atrapado en un ascensor con tu crush?',
+      '¿Qué harías si te ofrecieran ser inmortal?',
+      '¿Qué harías si te topara con alguien famoso en la calle?',
+      '¿Qué harías si todos tus dispositivos electrónicos dejaran de funcionar?',
+      '¿Qué harías si te convirtieras en mujer/hombre por un mes?',
+      '¿Qué harías si encontraras una billetera con dinero y documentos?',
+      '¿Qué harías si pudieras tener cualquier trabajo por un solo día?',
+      '¿Qué harías si el mundo se acabara en una semana?',
+      '¿Qué harías si te ofrecieran vivir en una realidad virtual perfecta?',
+      '¿Qué harías si te invitaran a una cena con 5 personas históricas?',
+      '¿Qué harías si supieras que alguien cercano te está mintiendo?',
+      '¿Qué harías si tuvieras la oportunidad de borrar un recuerdo?',
+      '¿Qué harías si pudieras comunicarte con los animales?',
+      '¿Qué harías si te tocara ser líder de tu país por un día?',
+      '¿Qué harías si te ofrecieran saber la fecha exacta de tu muerte?',
+      '¿Qué harías si descubrieras que existe vida extraterrestre?',
+    ],
+    promptsAdult: [
       '¿Qué harías si tu mejor amigo te confesara que está enamorado de vos?',
       '¿Qué harías si te ofrecieran un trío con dos personas que te gustan?',
       '¿Qué harías si descubrieras que tu pareja tiene un onlyfans?',
@@ -540,10 +698,10 @@ const CATEGORIES = [
   }
 ];
 
-// ── State ──
 let currentCat = null;
 let currentIndex = 0;
 let history = [];
+let adultMode = false;
 
 const catGrid = document.getElementById('catGrid');
 const gameScreen = document.getElementById('gameScreen');
@@ -553,6 +711,8 @@ const countDisplay = document.getElementById('countDisplay');
 const btnBack = document.getElementById('btnBack');
 const btnNext = document.getElementById('btnNext');
 const btnShuffle = document.getElementById('btnShuffle');
+const btnNormal = document.getElementById('btnNormal');
+const btnAdult = document.getElementById('btnAdult');
 
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -565,14 +725,23 @@ function shuffleArray(arr) {
 function playSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.frequency.value = 600; osc.type = 'sine';
     gain.gain.setValueAtTime(0.1, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.06);
   } catch(_) {}
+}
+
+function setMode(adult) {
+  adultMode = adult;
+  btnNormal.classList.toggle('active', !adult);
+  btnAdult.classList.toggle('active', adult);
+  btnNext.classList.toggle('adult-mode', adult);
+  catGrid.style.display = '';
+  gameScreen.classList.remove('active');
+  currentCat = null;
 }
 
 function renderCategories() {
@@ -591,7 +760,8 @@ function openCategory(id) {
   if (!cat) return;
   currentCat = cat;
   currentIndex = 0;
-  history = shuffleArray([...cat.prompts]);
+  const src = adultMode && cat.promptsAdult ? cat.promptsAdult : cat.prompts;
+  history = shuffleArray([...src]);
   gameScreen.classList.add('active');
   catGrid.style.display = 'none';
   document.getElementById('subtitle').style.display = 'none';
@@ -604,8 +774,8 @@ function showPrompt() {
   const prompt = history[currentIndex];
   promptText.textContent = prompt;
   promptText.className = 'prompt-text';
+  if (adultMode) promptText.classList.add('adult');
   if (prompt.length > 80) promptText.classList.add('small');
-  // trigger reflow for animation
   void promptText.offsetWidth;
   promptText.classList.add('fade-in');
   countDisplay.textContent = `${currentIndex + 1} / ${history.length}`;
@@ -620,7 +790,8 @@ function nextPrompt() {
 
 function reshuffle() {
   if (!currentCat) return;
-  history = shuffleArray([...currentCat.prompts]);
+  const src = adultMode && currentCat.promptsAdult ? currentCat.promptsAdult : currentCat.prompts;
+  history = shuffleArray([...src]);
   currentIndex = 0;
   showPrompt();
   playSound();
@@ -633,6 +804,8 @@ function goBack() {
   currentCat = null;
 }
 
+btnNormal.addEventListener('click', () => setMode(false));
+btnAdult.addEventListener('click', () => setMode(true));
 btnNext.addEventListener('click', nextPrompt);
 btnShuffle.addEventListener('click', reshuffle);
 btnBack.addEventListener('click', goBack);
