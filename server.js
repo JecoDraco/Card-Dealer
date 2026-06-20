@@ -2,10 +2,28 @@ const express = require('express');
 const http = require('http');
 const { Server: WebSocketServer } = require('ws');
 const crypto = require('crypto');
+const os = require('os');
 const { bestHand, compareHands } = require('./lib/hand-evaluator');
 
 const app = express();
-app.use(express.static('public'));
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/server-info', (req, res) => {
+  const interfaces = os.networkInterfaces();
+  let ip = 'localhost';
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        ip = iface.address;
+        break;
+      }
+    }
+    if (ip !== 'localhost') break;
+  }
+  const port = process.env.PORT || 3000;
+  res.json({ ip, port, url: `http://${ip}:${port}` });
+});
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -44,9 +62,11 @@ function shuffleDeck(deck) {
 function getRoomState(room) {
   const players = [];
   for (const [, info] of room.players) {
+    if (info.isTable) continue;
     players.push({
       nickname: info.nickname,
       isHost: info.isHost,
+      isTable: false,
       folded: info.folded,
       allIn: info.allIn,
       cardCount: info.cards.length
@@ -87,6 +107,36 @@ wss.on('connection', (ws) => {
     }
 
     switch (msg.type) {
+      case 'open_table': {
+        if (currentRoom) return sendTo(ws, { type: 'error', message: 'Ya estás en una sala' });
+
+        const code = generateRoomCode();
+        const room = {
+          code,
+          host: null,
+          phase: 'waiting',
+          players: new Map(),
+          deck: [],
+          communityCards: [null, null, null, null, null],
+          burnPile: []
+        };
+
+        currentPlayer = {
+          nickname: 'Mesa',
+          cards: [],
+          folded: false,
+          allIn: false,
+          isHost: false,
+          isTable: true
+        };
+        room.players.set(ws, currentPlayer);
+        rooms.set(code, room);
+        currentRoom = room;
+
+        sendTo(ws, { type: 'table_opened', code: room.code });
+        break;
+      }
+
       case 'create_room': {
         if (currentRoom) return sendTo(ws, { type: 'error', message: 'Ya estás en una sala' });
         if (!msg.nickname || msg.nickname.trim().length === 0)
@@ -156,8 +206,16 @@ wss.on('connection', (ws) => {
           cards: [],
           folded: false,
           allIn: false,
-          isHost: false
+          isHost: false,
+          isTable: false
         };
+
+        const hasTable = [...room.players.values()].some(p => p.isTable);
+        if (hasTable && !room.host) {
+          currentPlayer.isHost = true;
+          room.host = ws;
+        }
+
         room.players.set(ws, currentPlayer);
         currentRoom = room;
 
@@ -165,6 +223,7 @@ wss.on('connection', (ws) => {
         sendTo(ws, {
           type: 'joined_room',
           code: room.code,
+          isHost: currentPlayer.isHost,
           ...state
         });
 
@@ -186,25 +245,27 @@ wss.on('connection', (ws) => {
         room.burnPile = [];
 
         for (const [, player] of room.players) {
+          if (player.isTable) continue;
           player.cards = [];
           player.folded = false;
           player.allIn = false;
-          player.isHost = (player === currentPlayer);
         }
 
         const playerList = [...room.players.entries()];
         for (let i = 0; i < 2; i++) {
-          for (const [, player] of playerList) {
+          for (const [ws_p, player] of playerList) {
+            if (player.isTable) continue;
             player.cards.push(room.deck.pop());
           }
         }
 
         const state = getRoomState(room);
         for (const [ws2, player] of room.players) {
+          if (player.isTable) continue;
           sendTo(ws2, { type: 'your_cards', cards: player.cards, players: state.players });
         }
 
-        broadcast(room, { type: 'deal_complete', phase: 'preflop' });
+        broadcast(room, { type: 'deal_complete', phase: 'preflop', players: getRoomState(room).players });
         break;
       }
 
@@ -220,7 +281,8 @@ wss.on('connection', (ws) => {
         broadcast(room, {
           type: 'community_cards',
           phase: 'flop',
-          communityCards: room.communityCards
+          communityCards: room.communityCards,
+          players: getRoomState(room).players
         });
         break;
       }
@@ -237,7 +299,8 @@ wss.on('connection', (ws) => {
         broadcast(room, {
           type: 'community_cards',
           phase: 'turn',
-          communityCards: room.communityCards
+          communityCards: room.communityCards,
+          players: getRoomState(room).players
         });
         break;
       }
@@ -254,7 +317,8 @@ wss.on('connection', (ws) => {
         broadcast(room, {
           type: 'community_cards',
           phase: 'river',
-          communityCards: room.communityCards
+          communityCards: room.communityCards,
+          players: getRoomState(room).players
         });
         break;
       }
@@ -268,6 +332,7 @@ wss.on('connection', (ws) => {
 
         const hands = [];
         for (const [ws2, player] of room.players) {
+          if (player.isTable) continue;
           if (player.folded) {
             hands.push({
               nickname: player.nickname,
@@ -299,7 +364,7 @@ wss.on('connection', (ws) => {
           winner = active[active.length - 1];
         }
 
-        broadcast(room, { type: 'showdown', hands, winner: winner ? winner.nickname : null });
+        broadcast(room, { type: 'showdown', hands, winner: winner ? winner.nickname : null, players: getRoomState(room).players });
         break;
       }
 
@@ -361,21 +426,28 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (currentRoom && currentPlayer) {
       const room = currentRoom;
-      room.players.delete(ws);
+      const isTable = currentPlayer.isTable;
       const wasHost = currentPlayer.isHost;
+      room.players.delete(ws);
 
       if (room.players.size === 0) {
         rooms.delete(room.code);
         return;
       }
 
+      if (isTable) {
+        broadcast(room, { type: 'player_left', players: getRoomState(room).players });
+        return;
+      }
+
       if (wasHost) {
-        const nextEntry = room.players.entries().next().value;
-        if (nextEntry) {
-          const [nextWs, nextPlayer] = nextEntry;
-          room.host = nextWs;
-          nextPlayer.isHost = true;
-          broadcast(room, { type: 'host_changed', players: getRoomState(room).players });
+        for (const [nextWs, nextPlayer] of room.players) {
+          if (!nextPlayer.isTable) {
+            room.host = nextWs;
+            nextPlayer.isHost = true;
+            broadcast(room, { type: 'host_changed', players: getRoomState(room).players });
+            break;
+          }
         }
       } else {
         broadcast(room, { type: 'player_left', players: getRoomState(room).players });
