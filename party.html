@@ -172,6 +172,39 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
   font-family: inherit;
 }
 .btn-secondary:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-choice {
+  font-size: 1.4rem;
+  padding: 28px 40px;
+  border-radius: 18px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.15s;
+  font-family: inherit;
+  letter-spacing: 1px;
+  flex: 1;
+  max-width: 260px;
+}
+.btn-choice:hover { transform: translateY(-3px); filter: brightness(1.1); }
+.btn-choice:active { transform: translateY(0); }
+.btn-choice-truth { background: linear-gradient(135deg, #e94560, #c23152); color: #fff; }
+.btn-choice-dare { background: linear-gradient(135deg, #ff6f00, #e65100); color: #fff; }
+.btn-choice .emoji-big { font-size: 3rem; display: block; margin-bottom: 8px; }
+.btn-switch {
+  background: rgba(255,255,255,0.08);
+  color: #aaa;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-switch:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.choice-wrap { display: flex; gap: 16px; justify-content: center; width: 100%; max-width: 560px; }
+.choice-hint { color: #8888aa; font-size: 0.85rem; margin-top: 8px; }
+
 .count-display { color: #555577; font-size: 0.85rem; margin-top: 16px; text-align: center; }
 .footer { margin-top: 30px; color: rgba(255,255,255,0.15); font-size: 0.75rem; text-align: center; }
 .footer a { color: #555577; text-decoration: none; }
@@ -204,10 +237,10 @@ h1 { font-size: 2rem; letter-spacing: 3px; margin: 10px 0 4px; }
     <button class="btn-back" id="btnBack">← Volver</button>
     <span class="cat-label" id="catLabel"></span>
   </div>
-  <div class="prompt-box">
+  <div class="prompt-box" id="promptBox">
     <div class="prompt-text" id="promptText">Cargando...</div>
   </div>
-  <div class="game-controls">
+  <div class="game-controls" id="gameControls">
     <button class="btn-primary" id="btnNext">Siguiente →</button>
     <button class="btn-secondary" id="btnShuffle">🔀</button>
   </div>
@@ -285,89 +318,88 @@ const CATEGORIES = [
   },
   {
     id: 'verdad', emoji: '💌', name: 'Verdad o Reto', desc: 'Pregunta incómoda o desafío',
-    prompts: [
-      'VERDAD: ¿Cuál es tu mayor secreto?',
-      'RETO: Mandale un mensaje random a tu ex',
-      'VERDAD: ¿A quién del grupo besarías?',
-      'RETO: Hacé 10 flexiones ahora mismo',
-      'VERDAD: ¿Cuál fue tu momento más vergonzoso?',
-      'RETO: Llamá a tu mamá y decile que la amás',
-      'VERDAD: ¿De quién del grupo te cae mal?',
-      'RETO: Publicá un selfie feo en tus historias',
-      'VERDAD: ¿Alguna vez robaste algo?',
-      'RETO: Contá un chiste malo sin reírte',
-      'VERDAD: ¿Qué mentira grande dijiste alguna vez?',
-      'RETO: Hace un baile ridículo por 15 segundos',
-      'VERDAD: ¿Qué es lo que nunca le contarías a tus papás?',
-      'RETO: Cambiate de look con alguien por 5 minutos',
-      'VERDAD: ¿Cuál fue tu crush más raro?',
-      'RETO: Tomate algo sin manos',
-      'VERDAD: ¿Alguna vez espiaste a alguien?',
-      'RETO: Hablá con acento raro hasta tu próximo turno',
-      'VERDAD: ¿Qué harías si fueras invisible por un día?',
-      'RETO: Hacele un cumplido exagerado a la persona de tu derecha',
-      'VERDAD: ¿Qué es lo peor que hiciste estando borracho?',
-      'RETO: Cantá una canción con la letra inventada',
-      'VERDAD: ¿Alguna vez te enamoraste de un amigo?',
-      'RETO: Hacé una confesión a un desconocido por mensaje',
-      'VERDAD: ¿Cuál es tu mayor inseguridad?',
-      'RETO: Ponete algo ridículo en la cabeza',
-      'VERDAD: ¿Qué es lo más caro que rompiste?',
-      'RETO: Hace un minuto de micrófono abierto sobre un tema random',
-      'VERDAD: ¿Cuál fue tu cita más aburrida?',
-      'RETO: Mandale un mensaje a tu contacto más reciente diciendo "te extraño"',
+    hasChoice: true,
+    truthPrompts: [
+      '¿Cuál es tu mayor secreto?',
+      '¿A quién del grupo besarías?',
+      '¿Cuál fue tu momento más vergonzoso?',
+      '¿De quién del grupo te cae mal?',
+      '¿Alguna vez robaste algo?',
+      '¿Qué mentira grande dijiste alguna vez?',
+      '¿Qué es lo que nunca le contarías a tus papás?',
+      '¿Cuál fue tu crush más raro?',
+      '¿Alguna vez espiaste a alguien?',
+      '¿Qué harías si fueras invisible por un día?',
+      '¿Qué es lo peor que hiciste estando borracho?',
+      '¿Alguna vez te enamoraste de un amigo?',
+      '¿Cuál es tu mayor inseguridad?',
+      '¿Qué es lo más caro que rompiste?',
+      '¿Cuál fue tu cita más aburrida?',
     ],
-    promptsAdult: [
-      'VERDAD: ¿Cuál es tu mayor secreto sexual?',
-      'RETO: Mandale un mensaje subido de tono a tu ex',
-      'VERDAD: ¿A quién del grupo te tendrías sexo?',
-      'RETO: Chupale un dedo del pie a alguien',
-      'VERDAD: ¿Cuál fue tu experiencia más vergonzosa en la cama?',
-      'RETO: Llamá a alguien y decile "te necesito esta noche"',
-      'VERDAD: ¿De quién del grupo te excitas?',
-      'RETO: Hace un baile perreo contra alguien por 15s',
-      'VERDAD: ¿Alguna vez robaste algo?',
-      'RETO: Contá la historia más hot que tengas sin reírte',
-      'VERDAD: ¿Qué mentira grande le dijiste a tu pareja?',
-      'RETO: Pasale tu teléfono a alguien y que mande lo que quiera',
-      'VERDAD: ¿Qué no le contarías jamás a tu mamá?',
-      'RETO: Hace un lap dance contra una silla',
-      'VERDAD: ¿Cuál fue tu fetiche más raro?',
-      'RETO: Tomate un shot de algo fuerte',
-      'VERDAD: ¿Alguna vez espiaste a alguien desnudo?',
-      'RETO: Hablá con voz hot hasta tu próximo turno',
-      'VERDAD: ¿Qué harías si estuvieras sol@ con la persona que te gusta del grupo?',
-      'RETO: Hacele un masaje a la persona de tu derecha',
-      'VERDAD: ¿Qué es lo peor que hiciste estando borracho?',
-      'RETO: Cantá una canción de amor mirando a alguien a los ojos',
-      'VERDAD: ¿Cuál fue tu encuentro más random con un desconocido?',
-      'RETO: Hacé una confesión sexual a un desconocido por mensaje',
-      'VERDAD: ¿Cuál es tu mayor inseguridad en el sexo?',
-      'RETO: Sácate una prenda',
-      'VERDAD: ¿Qué es lo más atrevido que hiciste?',
-      'RETO: Hace un minuto de strip tease',
-      'VERDAD: ¿Cuál fue tu cita más aburrida?',
-      'RETO: Mandale un mensaje sexual a tu último contacto de WhatsApp',
-      'VERDAD: ¿Qué fetiche querés probar y nunca te animaste?',
-      'RETO: Besá a la persona de tu izquierda (en la boca)',
-      'VERDAD: ¿Cuál es la infidelidad más fuerte que conocés?',
-      'RETO: Ponete una venda y deja que alguien te toque por 30s',
-      'VERDAD: ¿Te excita alguien del trabajo/universidad?',
-      'RETO: Hacele una pregunta sexual a alguien del grupo',
-      'VERDAD: ¿Cuál fue el mejor sexo de tu vida?',
-      'RETO: Simulá un orgasmo para todo el grupo',
-      'VERDAD: ¿Con cuántas personas estuviste?',
-      'RETO: Contá tu experiencia más hot con lujo de detalles',
-      'VERDAD: ¿Alguna vez te gustó un amigo de tu pareja?',
-      'RETO: Hace un baile erótico con la canción que el grupo elija',
-      'VERDAD: ¿Qué es lo más atrevido que hiciste en público?',
-      'RETO: Mandá un audio hot a alguien que el grupo elija',
-      'VERDAD: ¿Usaste apps de citas solo para tener sexo?',
-      'RETO: Hacé una imitación sexual de alguien del grupo',
-      'VERDAD: ¿Te animarías a un trío?',
-      'RETO: Dejá que alguien te revise el celular por 1 minuto',
-      'VERDAD: ¿Cuál es tu fantasía sexual más loca?',
-      'RETO: Hace una llamada hot simulada con alguien del grupo',
+    darePrompts: [
+      'Mandale un mensaje random a tu ex',
+      'Hacé 10 flexiones ahora mismo',
+      'Llamá a tu mamá y decile que la amás',
+      'Publicá un selfie feo en tus historias',
+      'Contá un chiste malo sin reírte',
+      'Hace un baile ridículo por 15 segundos',
+      'Cambiate de look con alguien por 5 minutos',
+      'Tomate algo sin manos',
+      'Hablá con acento raro hasta tu próximo turno',
+      'Hacele un cumplido exagerado a la persona de tu derecha',
+      'Cantá una canción con la letra inventada',
+      'Hacé una confesión a un desconocido por mensaje',
+      'Ponete algo ridículo en la cabeza',
+      'Hace un minuto de micrófono abierto sobre un tema random',
+      'Mandale un mensaje a tu contacto más reciente diciendo "te extraño"',
+    ],
+    truthPromptsAdult: [
+      '¿Cuál es tu mayor secreto sexual?',
+      '¿A quién del grupo te tendrías sexo?',
+      '¿Cuál fue tu experiencia más vergonzosa en la cama?',
+      '¿De quién del grupo te excitas?',
+      '¿Qué mentira grande le dijiste a tu pareja?',
+      '¿Qué no le contarías jamás a tu mamá?',
+      '¿Cuál fue tu fetiche más raro?',
+      '¿Alguna vez espiaste a alguien desnudo?',
+      '¿Qué harías si estuvieras sol@ con la persona que te gusta del grupo?',
+      '¿Qué es lo peor que hiciste estando borracho?',
+      '¿Cuál fue tu encuentro más random con un desconocido?',
+      '¿Cuál es tu mayor inseguridad en el sexo?',
+      '¿Qué es lo más atrevido que hiciste?',
+      '¿Cuál fue tu cita más aburrida?',
+      '¿Qué fetiche querés probar y nunca te animaste?',
+      '¿Te excita alguien del trabajo/universidad?',
+      '¿Cuál fue el mejor sexo de tu vida?',
+      '¿Con cuántas personas estuviste?',
+      '¿Alguna vez te gustó un amigo de tu pareja?',
+      '¿Qué es lo más atrevido que hiciste en público?',
+      '¿Usaste apps de citas solo para tener sexo?',
+      '¿Te animarías a un trío?',
+      '¿Cuál es tu fantasía sexual más loca?',
+    ],
+    darePromptsAdult: [
+      'Mandale un mensaje subido de tono a tu ex',
+      'Chupale un dedo del pie a alguien',
+      'Llamá a alguien y decile "te necesito esta noche"',
+      'Hace un baile perreo contra alguien por 15s',
+      'Contá la historia más hot que tengas sin reírte',
+      'Pasale tu teléfono a alguien y que mande lo que quiera',
+      'Hace un lap dance contra una silla',
+      'Tomate un shot de algo fuerte',
+      'Hablá con voz hot hasta tu próximo turno',
+      'Sácate una prenda',
+      'Hace un minuto de strip tease',
+      'Besá a la persona de tu izquierda (en la boca)',
+      'Ponete una venda y deja que alguien te toque por 30s',
+      'Hacele una pregunta sexual a alguien del grupo',
+      'Simulá un orgasmo para todo el grupo',
+      'Contá tu experiencia más hot con lujo de detalles',
+      'Hace un baile erótico con la canción que el grupo elija',
+      'Mandá un audio hot a alguien que el grupo elija',
+      'Hacé una imitación sexual de alguien del grupo',
+      'Dejá que alguien te revise el celular por 1 minuto',
+      'Hace una llamada hot simulada con alguien del grupo',
     ]
   },
   {
@@ -702,12 +734,15 @@ let currentCat = null;
 let currentIndex = 0;
 let history = [];
 let adultMode = false;
+let currentChoice = null;
 
 const catGrid = document.getElementById('catGrid');
 const gameScreen = document.getElementById('gameScreen');
+const promptBox = document.getElementById('promptBox');
 const promptText = document.getElementById('promptText');
 const catLabel = document.getElementById('catLabel');
 const countDisplay = document.getElementById('countDisplay');
+const gameControls = document.getElementById('gameControls');
 const btnBack = document.getElementById('btnBack');
 const btnNext = document.getElementById('btnNext');
 const btnShuffle = document.getElementById('btnShuffle');
@@ -755,34 +790,100 @@ function renderCategories() {
   });
 }
 
-function openCategory(id) {
-  const cat = CATEGORIES.find(c => c.id === id);
-  if (!cat) return;
-  currentCat = cat;
-  currentIndex = 0;
+function getActivePrompts(cat) {
+  if (cat.hasChoice) {
+    const t = adultMode && cat.truthPromptsAdult ? cat.truthPromptsAdult : cat.truthPrompts;
+    const d = adultMode && cat.darePromptsAdult ? cat.darePromptsAdult : cat.darePrompts;
+    return { truth: t, dare: d };
+  }
   const src = adultMode && cat.promptsAdult ? cat.promptsAdult : cat.prompts;
-  history = shuffleArray([...src]);
-  gameScreen.classList.add('active');
-  catGrid.style.display = 'none';
-  document.getElementById('subtitle').style.display = 'none';
-  catLabel.textContent = cat.emoji + ' ' + cat.name;
+  return src;
+}
+
+function renderChoiceButtons() {
+  promptBox.innerHTML = `
+    <div style="text-align:center;width:100%;">
+      <div style="margin-bottom:12px;color:#8888aa;font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;">Elegí una opción</div>
+      <div class="choice-wrap">
+        <button class="btn-choice btn-choice-truth" id="btnPickTruth">
+          <span class="emoji-big">💌</span>
+          Verdad
+        </button>
+        <button class="btn-choice btn-choice-dare" id="btnPickDare">
+          <span class="emoji-big">⚡</span>
+          Reto
+        </button>
+      </div>
+      <div class="choice-hint">El jugador elige y todos escuchan</div>
+    </div>
+  `;
+  document.getElementById('btnPickTruth').addEventListener('click', () => pickChoice('truth'));
+  document.getElementById('btnPickDare').addEventListener('click', () => pickChoice('dare'));
+  gameControls.style.display = 'none';
+  countDisplay.textContent = '';
+}
+
+function pickChoice(choice) {
+  currentChoice = choice;
+  const active = getActivePrompts(currentCat);
+  const pool = choice === 'truth' ? active.truth : active.dare;
+  history = shuffleArray([...pool]);
+  currentIndex = 0;
   showPrompt();
   playSound();
 }
 
+function openCategory(id) {
+  const cat = CATEGORIES.find(c => c.id === id);
+  if (!cat) return;
+  currentCat = cat;
+  currentChoice = null;
+  currentIndex = 0;
+  history = [];
+  gameScreen.classList.add('active');
+  catGrid.style.display = 'none';
+  document.getElementById('subtitle').style.display = 'none';
+  catLabel.textContent = cat.emoji + ' ' + cat.name;
+
+  if (cat.hasChoice) {
+    renderChoiceButtons();
+    promptText.style.display = 'none';
+  } else {
+    const active = getActivePrompts(cat);
+    history = shuffleArray([...active]);
+    gameControls.style.display = '';
+    promptText.style.display = '';
+    promptBox.innerHTML = `<div class="prompt-text" id="promptText">Cargando...</div>`;
+    showPrompt();
+    playSound();
+  }
+}
+
 function showPrompt() {
+  if (!history.length) return;
   const prompt = history[currentIndex];
-  promptText.textContent = prompt;
-  promptText.className = 'prompt-text';
-  if (adultMode) promptText.classList.add('adult');
-  if (prompt.length > 80) promptText.classList.add('small');
-  void promptText.offsetWidth;
-  promptText.classList.add('fade-in');
+  const label = currentChoice === 'truth' ? '💌 Verdad' : currentChoice === 'dare' ? '⚡ Reto' : '';
+  const prefix = label ? `<div style="font-size:0.75rem;color:#8888aa;letter-spacing:2px;margin-bottom:8px;">${label}</div>` : '';
+  promptBox.innerHTML = `<div class="prompt-text${adultMode ? ' adult' : ''}${history[currentIndex].length > 80 ? ' small' : ''}" id="promptText">${prefix}${prompt}</div>`;
+  gameControls.style.display = '';
+  const switchBtn = document.getElementById('btnSwitch') || document.createElement('button');
+  if (!document.getElementById('btnSwitch')) {
+    switchBtn.id = 'btnSwitch';
+    switchBtn.className = 'btn-switch';
+    switchBtn.textContent = '↩ Otra opción';
+    switchBtn.addEventListener('click', () => {
+      if (currentCat && currentCat.hasChoice) renderChoiceButtons();
+    });
+    gameControls.appendChild(switchBtn);
+  }
+  switchBtn.style.display = currentCat && currentCat.hasChoice ? '' : 'none';
+  document.getElementById('btnNext').style.display = '';
+  document.getElementById('btnShuffle').style.display = '';
   countDisplay.textContent = `${currentIndex + 1} / ${history.length}`;
 }
 
 function nextPrompt() {
-  if (!currentCat) return;
+  if (!currentCat || !history.length) return;
   currentIndex = (currentIndex + 1) % history.length;
   showPrompt();
   playSound();
@@ -790,8 +891,16 @@ function nextPrompt() {
 
 function reshuffle() {
   if (!currentCat) return;
-  const src = adultMode && currentCat.promptsAdult ? currentCat.promptsAdult : currentCat.prompts;
-  history = shuffleArray([...src]);
+  if (currentCat.hasChoice && currentChoice) {
+    const active = getActivePrompts(currentCat);
+    const pool = currentChoice === 'truth' ? active.truth : active.dare;
+    history = shuffleArray([...pool]);
+  } else if (!currentCat.hasChoice) {
+    const active = getActivePrompts(currentCat);
+    history = shuffleArray([...active]);
+  } else {
+    return;
+  }
   currentIndex = 0;
   showPrompt();
   playSound();
@@ -802,6 +911,10 @@ function goBack() {
   catGrid.style.display = '';
   document.getElementById('subtitle').style.display = '';
   currentCat = null;
+  currentChoice = null;
+  promptText.style.display = '';
+  gameControls.style.display = '';
+  document.querySelectorAll('.btn-switch').forEach(el => el.remove());
 }
 
 btnNormal.addEventListener('click', () => setMode(false));
