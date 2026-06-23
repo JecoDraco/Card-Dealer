@@ -387,6 +387,37 @@ button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: no
   outline: none;
 }
 .qr-url-wrap input:focus { border-color: #3a9a5a; }
+.qr-ips {
+  margin-bottom: 12px;
+  text-align: left;
+}
+.qr-ips-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.7rem;
+  color: #5a9a6a;
+  margin-bottom: 6px;
+}
+.qr-ip-opt {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #2a6a44;
+  border-radius: 6px;
+  color: #8fc9a0;
+  font-family: monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.qr-ip-opt:hover { background: rgba(255,255,255,0.15); }
+.qr-ip-opt .ifname {
+  color: #5a9a6a;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.65rem;
+}
 
 .showdown-overlay {
   background: rgba(0,0,0,0.85);
@@ -710,6 +741,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: no
       <label>URL:</label>
       <input type="text" id="qrUrlInput" value="..." oninput="generateQR()">
     </div>
+    <div class="qr-ips" id="qrIps"></div>
     <button class="btn-gray btn-sm" onclick="closeQR()">Cerrar</button>
   </div>
 </div>
@@ -1004,8 +1036,26 @@ function detectTableServerURL() {
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         generateTableQR(info.url);
       }
+      if (info.ips && info.ips.length > 1) renderTableIPList(info.ips);
     })
     .catch(() => {});
+}
+
+function renderTableIPList(ips) {
+  const wrap = document.querySelector('.table-qr-wrap');
+  let list = document.getElementById('tableIPList');
+  if (!list) {
+    list = document.createElement('div');
+    list.id = 'tableIPList';
+    list.style.marginTop = '10px';
+    list.style.textAlign = 'left';
+    wrap.appendChild(list);
+  }
+  let html = '<div style="font-family:system-ui;font-size:0.7rem;color:#5a9a6a;margin-bottom:4px;">También probá con:</div>';
+  for (const ip of ips) {
+    html += `<div style="font-family:monospace;font-size:0.75rem;padding:2px 0;color:#8fc9a0;">${ip.address} <span style="color:#5a9a6a;font-family:system-ui;font-size:0.65rem;">(${ip.name})</span></div>`;
+  }
+  list.innerHTML = html;
 }
 
 function renderTable() {
@@ -1063,6 +1113,7 @@ let qrInstance = null;
 function showQR() {
   const input = document.getElementById('qrUrlInput');
   input.value = window.location.href.split('?')[0].split('#')[0];
+  document.getElementById('qrIps').innerHTML = '<div class="qr-ips-label">Buscando IPs...</div>';
   document.getElementById('qrOverlay').classList.add('active');
   detectServerURL();
   setTimeout(generateQR, 200);
@@ -1072,12 +1123,28 @@ function closeQR() {
   document.getElementById('qrOverlay').classList.remove('active');
 }
 
+function renderIPList(ips) {
+  const el = document.getElementById('qrIps');
+  el.innerHTML = '<div class="qr-ips-label">IPs disponibles (click para usar):</div>';
+  for (const ip of ips) {
+    const btn = document.createElement('button');
+    btn.className = 'qr-ip-opt';
+    btn.innerHTML = `${ip.address} <span class="ifname">(${ip.name})</span>`;
+    btn.onclick = () => {
+      document.getElementById('qrUrlInput').value = ip.url;
+      generateQR();
+    };
+    el.appendChild(btn);
+  }
+}
+
 function detectServerURL() {
   fetch('/api/server-info')
     .then(r => r.json())
     .then(info => {
       const input = document.getElementById('qrUrlInput');
       input.placeholder = info.url;
+      if (info.ips && info.ips.length > 0) renderIPList(info.ips);
       if (input.value.includes('localhost') || input.value.includes('127.0.0.1')) {
         input.value = info.url;
         generateQR();

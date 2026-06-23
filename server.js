@@ -11,18 +11,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/server-info', (req, res) => {
   const interfaces = os.networkInterfaces();
-  let ip = 'localhost';
+  const ips = [];
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
-        ip = iface.address;
-        break;
+        ips.push({ name, address: iface.address });
       }
     }
-    if (ip !== 'localhost') break;
   }
   const port = process.env.PORT || 3000;
-  res.json({ ip, port, url: `http://${ip}:${port}` });
+  const mainIp = ips.length > 0 ? ips[0].address : 'localhost';
+  res.json({
+    ip: mainIp,
+    port,
+    url: `http://${mainIp}:${port}`,
+    ips: ips.map(i => ({ ...i, url: `http://${i.address}:${port}` }))
+  });
 });
 
 const server = http.createServer(app);
